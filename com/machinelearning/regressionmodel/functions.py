@@ -14,6 +14,7 @@ from keras.optimizers import Adam
 from keras.utils import np_utils
 import keras_metrics as km
 
+# super parameters
 BATCH_START = 0
 TIME_STEPS = 20
 BATCH_SIZE = 50
@@ -196,15 +197,12 @@ def cnn_regression(x, y):
     print('\ntest accuracy: ', accuracy)
 
 
-def get_batch():
-    pass
-
-
-def rnn_regress_demo(x, y):
+def rnn_regression(x, y):
     """
-
+    applies rnn model to predict the target
     :return:
     """
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3)
     model = Sequential()
     # build a LSTM RNN
     model.add(LSTM(
@@ -220,13 +218,15 @@ def rnn_regress_demo(x, y):
                   loss='mse', )
 
     print('Training ------------')
-    for step in range(501):
-        # data shape = (batch_num, steps, inputs/outputs)
-        x_batch, y_batch, xs = get_batch()
-        cost = model.train_on_batch(x_batch, y_batch)
-        pred = model.predict(x_batch, BATCH_SIZE)
-        if step % 10 == 0:
-            print('train cost: ', cost)
+    for step in range(500):
+        x_batch = x_train[BATCH_INDEX: BATCH_INDEX + BATCH_SIZE, :, :]
+        y_batch = y_train[BATCH_INDEX: BATCH_INDEX + BATCH_SIZE, :]
+        model.train_on_batch(x_batch, y_batch)
+        BATCH_INDEX += BATCH_SIZE
+        BATCH_INDEX = 0 if BATCH_INDEX >= x_train.shape[0] else BATCH_INDEX
+
+    y_pred = model.predict(x=x_test)
+    evaluate(y_pred, y_test)
 
 
 def evaluate(y_pred, y_test):
