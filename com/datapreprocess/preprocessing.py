@@ -2,12 +2,11 @@
 import re
 import numpy as np
 import pandas as pd
-
+import itcs6156.settings as settings
 
 # %% load dataset
-df = pd.read_csv(r'/Users/zehanxu/Dropbox/itcs6156/static/dataset/Boston/listings.csv.gz', compression='gzip')
+df = pd.read_csv(settings.DATA_URL + 'listings.csv.gz', compression='gzip')
 print(df.info(verbose=True))
-
 
 # %% preprocessing
 # 1. time of host join Airbnb, processed to number days since first hosting in days
@@ -21,7 +20,7 @@ df_select_X = pd.concat([df_select_X, df_temp], axis=1)
 
 # 3. host response rate in percentage, processed to float [0, 1]
 # null value exists, not included in any category
-df_temp = df['host_response_rate'].astype('str').map(lambda x: float(x.strip('%'))/100)
+df_temp = df['host_response_rate'].astype('str').map(lambda x: float(x.strip('%')) / 100)
 df_select_X = pd.concat([df_select_X, df_temp], axis=1)
 
 # 4. whether host is superhost, processed to dummy variable 1-True 0-False
@@ -120,55 +119,8 @@ df_select_X = pd.concat([df_select_X, df['maximum_nights']], axis=1)
 df_temp = (df['has_availability'] == 't').astype('int')
 df_select_X = pd.concat([df_select_X, df_temp], axis=1)
 
-
 # %% target variables
 # 1. number of days available for booking in the next 30, 60, 90, 365 days
 df_select_Y = df[['availability_30', 'availability_60', 'availability_90', 'availability_365']].copy()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 df_select_X.info()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
