@@ -11,7 +11,7 @@ def k_means_cluster(X):
     :return:
     """
     y_pred = KMeans(n_clusters=5, random_state=9).fit_predict(X)
-    print(metrics.calinski_harabaz_score(X, y_pred))
+    print(metrics.calinski_harabasz_score(X, y_pred))
     return y_pred
 
 
@@ -22,7 +22,7 @@ def dbscan_cluster(X):
     :return:
     """
     y_pred = DBSCAN(eps=10, min_samples=10).fit_predict(X)
-    print(metrics.calinski_harabaz_score(X, y_pred))
+    print(metrics.calinski_harabasz_score(X, y_pred))
     return y_pred
 
 
@@ -35,7 +35,7 @@ def gmm_cluster(X):
     gmm = GaussianMixture(n_components=10)
     gmm.fit(X)
     y_pred = gmm.predict(X)
-    print(metrics.calinski_harabaz_score(X, y_pred))
+    print(metrics.calinski_harabasz_score(X, y_pred))
     return y_pred
 
 
@@ -48,5 +48,5 @@ def hierarchical_cluster(X):
     clu = AgglomerativeClustering(n_clusters=10,
                                   linkage='average')
     y_pred = clu.fit_predict(X)
-    print(metrics.calinski_harabaz_score(X, y_pred))
+    print(metrics.calinski_harabasz_score(X, y_pred))
     return y_pred

@@ -4,11 +4,12 @@ from com.models.models import DataCluster
 from itcs6156 import settings
 from com.machinelearning.clustermodel.cluster_functions import *
 from com.machinelearning.regressionmodel.functions import *
+from com.machinelearning.regressionmodel.functions_fea_select import *
 
 cluster_methods = ['kmeans', 'dbscan', 'gmm', 'hierachical']
 
-regression_methods = ['linear', 'decision_tree', 'support_vector', 'gradient_boosting', 'random_forest', 'ridge', 'cnn',
-                      'rnn']
+regression_methods = ['linear', 'decision_tree', 'gradient_boosting', 'random_forest',
+                      'ridge']  # , 'cnn', 'rnn', 'support_vector']
 
 
 def load_data(city_name):
@@ -53,6 +54,34 @@ def cluster_data(X, method):
     return cluster_dict
 
 
+# def regression_data(X, Y, method):
+#     """
+#     apply regression model to the dataset and return the result
+#     :param X:
+#     :param Y:
+#     :param method:
+#     :return:
+#     """
+#     Y = Y[:, 0]
+#     if method == 'linear':
+#         evaluation_res = linear_regression(X, Y)
+#     elif method == 'decision_tree':
+#         evaluation_res = decision_tree_regression(X, Y, 5)
+#     elif method == 'support_vector':
+#         evaluation_res = support_vector_regression(X, Y)
+#     elif method == 'gradient_boosting':
+#         evaluation_res = gradient_boosting_regression(X, Y)
+#     elif method == 'random_forest':
+#         evaluation_res = random_forest_regression(X, Y, 5)
+#     elif method == 'ridge':
+#         evaluation_res = ridge_regression(X, Y)
+#     elif method == 'cnn':
+#         evaluation_res = cnn_regression(X, Y)
+#     else:
+#         evaluation_res = rnn_regression(X, Y)
+#     return evaluation_res
+
+
 def regression_data(X, Y, method):
     """
     apply regression model to the dataset and return the result
@@ -61,24 +90,27 @@ def regression_data(X, Y, method):
     :param method:
     :return:
     """
-    Y = Y[:, 1]
+    Y = Y[:, 0]
+    evaluation_res = None
+    best_individual = None
     if method == 'linear':
-        evaluation_res = linear_regression(X, Y)
+        # evaluation_res = linear_regression(X, Y)
+        evaluation_res, best_individual = GeneticAlgorithm(X, Y, reg_method=linear_regression)
     elif method == 'decision_tree':
-        evaluation_res = decision_tree_regression(X, Y, 5)
+        evaluation_res, best_individual = GeneticAlgorithm(X, Y, reg_method=decision_tree_regression, max_depth=5)
     elif method == 'support_vector':
-        evaluation_res = support_vector_regression(X, Y)
+        evaluation_res, best_individual = GeneticAlgorithm(X, Y, reg_method=support_vector_regression)
     elif method == 'gradient_boosting':
-        evaluation_res = gradient_boosting_regression(X, Y)
+        evaluation_res, best_individual = GeneticAlgorithm(X, Y, reg_method=gradient_boosting_regression)
     elif method == 'random_forest':
-        evaluation_res = random_forest_regression(X, Y, 5)
+        evaluation_res, best_individual = GeneticAlgorithm(X, Y, reg_method=random_forest_regression, max_depth=5)
     elif method == 'ridge':
-        evaluation_res = ridge_regression(X, Y)
+        evaluation_res, best_individual = GeneticAlgorithm(X, Y, reg_method=ridge_regression)
     elif method == 'cnn':
-        evaluation_res = cnn_regression(X, Y)
+        evaluation_res, best_individual = GeneticAlgorithm(X, Y, reg_method=cnn_regression)
     else:
-        evaluation_res = rnn_regression(X, Y)
-    return evaluation_res
+        evaluation_res, best_individual = GeneticAlgorithm(X, Y, reg_method=rnn_regression)
+    return evaluation_res, best_individual.chromosome
 
 
 def visualize_result(regression_result_dict):
@@ -101,6 +133,7 @@ def split_data(X, Y, cluster_dict):
             x_data.append(X[row])
             y_data.append(Y[row])
         dataset_dict[key] = DataCluster(x_data, y_data)
+    dataset_dict[-1] = DataCluster(X, Y)
     return dataset_dict
 
 

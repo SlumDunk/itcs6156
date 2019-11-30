@@ -1,8 +1,9 @@
 from com.app.base import *
-
+import time
 CITY_NAME = 'Denver'
 
 if __name__ == '__main__':
+    time_start = time.time()
     # load data
     X, Y = load_data(CITY_NAME)
     X = X.values
@@ -15,3 +16,6 @@ if __name__ == '__main__':
     regression_dicts = call_regressions(dataset_dict)
     # visualize result
     visualize_result(regression_dicts)
+    print(f"- time cost: {int((time.time() - time_start) / 3600):.0f}h "
+          f"{int(((time.time() - time_start) / 60) % 60):.0f}m "
+          f"{int((time.time() - time_start) % 60):.0f}s -")
