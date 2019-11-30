@@ -61,7 +61,7 @@ def regression_data(X, Y, method):
     :param method:
     :return:
     """
-    Y = Y[:, 1]
+    Y = Y[:, 0]
     if method == 'linear':
         evaluation_res = linear_regression(X, Y)
     elif method == 'decision_tree':
