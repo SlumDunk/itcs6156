@@ -14,4 +14,4 @@ if __name__ == '__main__':
     # run regression model for different cluster of data
     regression_dicts = call_regressions(dataset_dict)
     # visualize result
-    visualize_result()
+    visualize_result(regression_dicts)

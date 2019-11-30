@@ -81,7 +81,7 @@ def regression_data(X, Y, method):
     return evaluation_res
 
 
-def visualize_result():
+def visualize_result(regression_result_dict):
     return
 
 
