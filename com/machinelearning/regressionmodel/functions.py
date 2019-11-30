@@ -1,3 +1,4 @@
+from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
@@ -7,14 +8,14 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import Ridge
 from sklearn import metrics
 import numpy as np
-from keras.layers import Dense, Activation, Flatten, Conv1D, MaxPooling1D, Dropout, SimpleRNN, LSTM, TimeDistributed, \
-    Input
+from keras.layers import Dense, Activation, Flatten, Conv1D, MaxPooling1D, Dropout, LSTM, TimeDistributed
 from keras.models import Sequential
 from keras.optimizers import Adam
-from keras.utils import np_utils
-import keras_metrics as km
 
 # super parameters
+from com.models.models import Evaluation
+from keras import losses
+
 BATCH_START = 0
 TIME_STEPS = 20
 BATCH_SIZE = 50
@@ -33,10 +34,10 @@ def linear_regression(x, y):
     """
     x_train, x_test, y_train, y_test = train_test_split(x, y, random_state=1)
     lin_reg = LinearRegression()
-    lin_reg.fit(x_train, x_test)
+    lin_reg.fit(x_train, y_train)
 
     y_pred = lin_reg.predict(x_test)
-    evaluate(y_pred, y_test)
+    return evaluate(y_pred, y_test)
 
 
 def decision_tree_regression(x, y, max_depth):
@@ -50,10 +51,10 @@ def decision_tree_regression(x, y, max_depth):
     x_train, x_test, y_train, y_test = train_test_split(x, y, random_state=1)
 
     decision_tree_reg = DecisionTreeRegressor(max_depth=max_depth)
-    decision_tree_reg.fit(x_train, x_test)
+    decision_tree_reg.fit(x_train, y_train)
 
     y_pred = decision_tree_reg.predict(x_test)
-    evaluate(y_pred, y_test)
+    return evaluate(y_pred, y_test)
 
 
 def support_vector_regression(x, y):
@@ -68,7 +69,7 @@ def support_vector_regression(x, y):
     linear_svr = SVR(kernel='linear')
     linear_svr.fit(x_train, y_train.ravel())
     y_pred = linear_svr.predict(x_test)
-    evaluate(y_pred, y_test)
+    return evaluate(y_pred, y_test)
 
 
 def gradient_boosting_regression(x, y):
@@ -96,9 +97,9 @@ def gradient_boosting_regression(x, y):
         , max_leaf_nodes=None
         , warm_start=False
     )
-    gbdt.fit(x_train, x_test)
-    y_pred = gbdt.predict(y_train)
-    evaluate(y_pred, y_test)
+    gbdt.fit(x_train, y_train)
+    y_pred = gbdt.predict(x_test)
+    return evaluate(y_pred, y_test)
 
 
 def random_forest_regression(x, y, max_depth):
@@ -111,9 +112,9 @@ def random_forest_regression(x, y, max_depth):
     """
     x_train, x_test, y_train, y_test = train_test_split(x, y, random_state=1)
     rf = RandomForestRegressor(max_depth=max_depth)
-    rf.fit(x_train, x_test)
+    rf.fit(x_train, y_train)
     y_pred = rf.predict(x_test)
-    evaluate(y_pred, y_test)
+    return evaluate(y_pred, y_test)
 
 
 def ridge_regression(x, y):
@@ -126,9 +127,8 @@ def ridge_regression(x, y):
     x_train, x_test, y_train, y_test = train_test_split(x, y, random_state=1)
     ridge_model = Ridge(alpha=1.0, fit_intercept=True, solver='auto', copy_X=True)
     ridge_model.fit(x_train, y_train)
-    ridge_model.fit(x_train, x_test)
     y_pred = ridge_model.predict(x_test)
-    evaluate(y_pred, y_test)
+    return evaluate(y_pred, y_test)
 
 
 def cnn_regression(x, y):
@@ -141,8 +141,8 @@ def cnn_regression(x, y):
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3)
     columns = x.shape[1]
     # (-1,5,1)
-    x_train = x_train.reshape((int(len(x_train) / columns), columns, 1))
-    x_test = x_test.reshape((int(len(x_test) / columns), columns, 1))
+    x_train = x_train.reshape((int(len(x_train)), columns, 1))
+    x_test = x_test.reshape((int(len(x_test)), columns, 1))
     model = Sequential()
 
     model.add(Conv1D(
@@ -181,7 +181,7 @@ def cnn_regression(x, y):
 
     # We add metrics to get more results you want to see
     model.compile(optimizer=adam,
-                  loss='categorical_crossentropy',
+                  loss=losses.mean_squared_error,
                   metrics=['accuracy'])
 
     print('Training ------------')
@@ -189,12 +189,14 @@ def cnn_regression(x, y):
     model.fit(x_train, y_train, epochs=10, batch_size=64)
 
     print('\nTesting ------------')
-    targets = model.predict(x_test)
+    y_pred = model.predict(x_test)
 
     # Evaluate the model with the metrics we defined earlier
     loss, accuracy = model.evaluate(x_test, y_test)
     print('\ntest loss: ', loss)
     print('\ntest accuracy: ', accuracy)
+
+    return evaluate(y_pred, y_test)
 
 
 def rnn_regression(x, y):
@@ -203,34 +205,44 @@ def rnn_regression(x, y):
     :return:
     """
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3)
+    columns = x.shape[1]
+    x_train = x_train.reshape((int(len(x_train)), columns, 1))
+    x_test = x_test.reshape((int(len(x_test)), columns, 1))
+
+    # y_train = y_train.reshape((int(len(y_train)), 1, 1))
+    # y_test = y_test.reshape((int(len(y_test)), 1, 1))
+
     model = Sequential()
+
     # build a LSTM RNN
-    model.add(LSTM(
-        batch_input_shape=(BATCH_SIZE, TIME_STEPS, INPUT_SIZE),  # Or: input_dim=INPUT_SIZE, input_length=TIME_STEPS,
-        output_dim=CELL_SIZE,
-        return_sequences=True,  # True: output at all steps. False: output as last step.
-        stateful=True,  # True: the final state of batch1 is feed into the initial state of batch2
-    ))
+    model.add(LSTM(32))
     # add output layer
-    model.add(TimeDistributed(Dense(OUTPUT_SIZE)))
+    model.add(Dense(OUTPUT_SIZE))
     adam = Adam(LR)
     model.compile(optimizer=adam,
-                  loss='mse', )
+                  loss=losses.mean_squared_error, )
 
     print('Training ------------')
-    for step in range(500):
-        x_batch = x_train[BATCH_INDEX: BATCH_INDEX + BATCH_SIZE, :, :]
-        y_batch = y_train[BATCH_INDEX: BATCH_INDEX + BATCH_SIZE, :]
-        model.train_on_batch(x_batch, y_batch)
-        BATCH_INDEX += BATCH_SIZE
-        BATCH_INDEX = 0 if BATCH_INDEX >= x_train.shape[0] else BATCH_INDEX
-
+    model.fit(x_train, y_train, batch_size=50)
     y_pred = model.predict(x=x_test)
-    evaluate(y_pred, y_test)
+    return evaluate(y_pred, y_test)
 
 
 def evaluate(y_pred, y_test):
     # calculate MSE
-    print("MSE:", metrics.mean_squared_error(y_test, y_pred))
+    mse = metrics.mean_squared_error(y_test, y_pred)
+    print("MSE:", mse)
     # calculate RMSE
-    print("RMSE:", np.sqrt(metrics.mean_squared_error(y_test, y_pred)))
+    rmse = np.sqrt(metrics.mean_squared_error(y_test, y_pred))
+    print("RMSE:", rmse)
+    # calculate MDE
+    mde = metrics.median_absolute_error(y_test, y_pred)
+    print("MDE:", mde)
+    # calculate MAE
+    mae = metrics.mean_squared_error(y_test, y_pred)
+    print("MAE:", mae)
+    # calculate r2 score
+    r_score = metrics.r2_score(y_test, y_pred)
+    print("R SCORE:", r_score)
+
+    return Evaluation(mse, rmse, mde, mae, r_score)
