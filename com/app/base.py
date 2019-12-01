@@ -122,13 +122,13 @@ def call_regressions(dataset_dict):
     sorted(dataset_dict.keys())
     for label, dataset in dataset_dict.items():
         print('-------------------------cluster: ' + str(label) + '------------------------')
-        # result_dict = {}
-        # for method in regression_methods:
-        #     print('-------------------------method: ' + method + '------------------------')
-        #     search_history, best_features = regression_data(dataset.x, dataset.y, method)
-        #     result_dict[method] = search_history
-        # regression_dict[label] = result_dict
-        regression_data(dataset.x, dataset.y, 'cnn')
+        result_dict = {}
+        for method in regression_methods:
+            print('-------------------------method: ' + method + '------------------------')
+            search_history, best_features = regression_data(dataset.x, dataset.y, method)
+            result_dict[method] = search_history
+        regression_dict[label] = result_dict
+        # regression_data(dataset.x, dataset.y, 'cnn')
     return regression_dict
 
 
