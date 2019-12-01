@@ -8,7 +8,7 @@ from com.machinelearning.regressionmodel.functions_fea_select import *
 
 import pickle
 
-cluster_methods = ['kmeans', 'dbscan', 'gmm', 'hierachical']
+cluster_methods = ['kmeans', 'gmm', 'hierachical']
 
 regression_methods = ['linear', 'decision_tree', 'gradient_boosting', 'random_forest',
                       'ridge']  # , 'cnn', 'rnn', 'support_vector']

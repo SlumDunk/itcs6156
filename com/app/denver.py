@@ -13,11 +13,12 @@ if __name__ == '__main__':
     for method in cluster_methods:
         # cluster data
         cluster_dict = cluster_data(X, method)
+        print(len(cluster_dict.keys()))
         # split the dataset into different cluster
         dataset_dict = split_data(X, Y, cluster_dict)
         # run regression model for different cluster of data
         regression_dicts = call_regressions(dataset_dict)
-        cluster_regression_dict[method] = regression_dicts
+        # cluster_regression_dict[method] = regression_dicts
     save_result(cluster_regression_dict, CITY_NAME)
     # visualize result
     visualize_result(cluster_regression_dict)
