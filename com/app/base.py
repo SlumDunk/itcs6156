@@ -4,11 +4,14 @@ from com.models.models import DataCluster
 from itcs6156 import settings
 from com.machinelearning.clustermodel.cluster_functions import *
 from com.machinelearning.regressionmodel.functions import *
+from com.machinelearning.regressionmodel.functions_fea_select import *
+
+import pickle
 
 cluster_methods = ['kmeans', 'dbscan', 'gmm', 'hierachical']
 
-regression_methods = ['linear', 'decision_tree', 'support_vector', 'gradient_boosting', 'random_forest', 'ridge', 'cnn',
-                      'rnn']
+regression_methods = ['linear', 'decision_tree', 'gradient_boosting', 'random_forest',
+                      'ridge']  # , 'cnn', 'rnn', 'support_vector']
 
 
 def load_data(city_name):
@@ -62,23 +65,26 @@ def regression_data(X, Y, method):
     :return:
     """
     Y = Y[:, 0]
+    search_history = None
+    best_individual = None
     if method == 'linear':
-        evaluation_res = linear_regression(X, Y)
+        # evaluation_res = linear_regression(X, Y)
+        search_history, best_individual = GeneticAlgorithm(X, Y, reg_method=linear_regression)
     elif method == 'decision_tree':
-        evaluation_res = decision_tree_regression(X, Y, 5)
+        search_history, best_individual = GeneticAlgorithm(X, Y, reg_method=decision_tree_regression, max_depth=5)
     elif method == 'support_vector':
-        evaluation_res = support_vector_regression(X, Y)
+        search_history, best_individual = GeneticAlgorithm(X, Y, reg_method=support_vector_regression)
     elif method == 'gradient_boosting':
-        evaluation_res = gradient_boosting_regression(X, Y)
+        search_history, best_individual = GeneticAlgorithm(X, Y, reg_method=gradient_boosting_regression)
     elif method == 'random_forest':
-        evaluation_res = random_forest_regression(X, Y, 5)
+        search_history, best_individual = GeneticAlgorithm(X, Y, reg_method=random_forest_regression, max_depth=5)
     elif method == 'ridge':
-        evaluation_res = ridge_regression(X, Y)
+        search_history, best_individual = GeneticAlgorithm(X, Y, reg_method=ridge_regression)
     elif method == 'cnn':
-        evaluation_res = cnn_regression(X, Y)
+        search_history, best_individual = GeneticAlgorithm(X, Y, reg_method=cnn_regression)
     else:
-        evaluation_res = rnn_regression(X, Y)
-    return evaluation_res
+        search_history, best_individual = GeneticAlgorithm(X, Y, reg_method=rnn_regression)
+    return search_history, best_individual.chromosome
 
 
 def visualize_result(regression_result_dict):
@@ -116,13 +122,26 @@ def call_regressions(dataset_dict):
     sorted(dataset_dict.keys())
     for label, dataset in dataset_dict.items():
         print('-------------------------cluster: ' + str(label) + '------------------------')
-        result_dict = {}
-        for method in regression_methods:
-            print('-------------------------method: ' + method + '------------------------')
-            result_dict[method] = regression_data(dataset.x, dataset.y, method)
-        regression_dict[label] = result_dict
-        # regression_data(dataset.x, dataset.y, 'rnn')
+        # result_dict = {}
+        # for method in regression_methods:
+        #     print('-------------------------method: ' + method + '------------------------')
+        #     search_history, best_features = regression_data(dataset.x, dataset.y, method)
+        #     result_dict[method] = search_history
+        # regression_dict[label] = result_dict
+        regression_data(dataset.x, dataset.y, 'cnn')
     return regression_dict
 
 
 pass
+
+
+def save_result(regression_dicts, city_name):
+    """
+
+    :param regression_dicts:
+    :param city_name:
+    :return:
+    """
+    output_file = settings.DATA_URL + city_name + '/output/result.pkl'
+    with open(output_file, 'wb') as f:
+        pickle.dump(regression_dicts, f)
