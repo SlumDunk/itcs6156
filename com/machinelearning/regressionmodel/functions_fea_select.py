@@ -63,10 +63,10 @@ class Individual:
         else:
             result_train, result_test = self.reg_method(X, T, self.max_depth)
 
-        return result_train, result_test.rmse
+        return result_train, result_test
 
 
-def GeneticAlgorithm(X, T, max_gen=100, pop_size=100, **params):
+def GeneticAlgorithm(X, T, max_gen=30, pop_size=10, **params):
     time_start = time.time()
     reg_method = params.pop('reg_method', LinearRegression)
     max_depth = params.pop('max_depth', None)

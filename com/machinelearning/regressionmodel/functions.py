@@ -1,3 +1,4 @@
+import keras
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
@@ -24,46 +25,7 @@ OUTPUT_SIZE = 1
 CELL_SIZE = 20
 LR = 0.006
 
-cnn_model = Sequential()
-
-cnn_model.add(Conv1D(
-    filters=32,
-    kernel_size=2,
-    strides=1,
-    padding='same',
-    data_format='channels_first'
-))
-cnn_model.add(Activation('relu'))
-
-cnn_model.add(MaxPooling1D(
-    pool_size=2,
-    strides=2,
-    padding='same',
-    data_format='channels_first'
-))
-cnn_model.add(Dropout(0.2))
-cnn_model.add(Conv1D(
-    64, 2, strides=1, padding='same', data_format='channels_first'
-))
-cnn_model.add(Activation('relu'))
-
-cnn_model.add(MaxPooling1D(2, 2, 'same', data_format='channels_first'))
-cnn_model.add(Dropout(0.2))
-cnn_model.add(Flatten())
-cnn_model.add(Dense(128))
-cnn_model.add(Activation('relu'))
-
-# Fully connected layer 2 to shape (1) for linear result
-cnn_model.add(Dense(1, kernel_initializer='normal'))
-cnn_model.add(Activation('linear'))
-
-# Another way to define your optimizer
-adam = Adam(lr=1e-4)
-
-# We add metrics to get more results you want to see
-cnn_model.compile(optimizer=adam,
-                  loss=losses.mean_squared_error,
-                  metrics=['accuracy'])
+max_iteration = 10
 
 
 def linear_regression(x, y):
@@ -73,24 +35,39 @@ def linear_regression(x, y):
     :param y:
     :return:
     """
-    x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
     lin_reg = LinearRegression()
-    lin_reg.fit(x_train, y_train)
-    y_pred_train = evaluate(lin_reg.predict(x_train), y_train).rmse
-    y_pred_validation = evaluate(lin_reg.predict(x_validation), y_validation).rmse
-    train_criteron = weighted_cost(y_pred_train, y_pred_validation)
 
-    lin_reg.fit(x_tv, y_tv)
-    y_pred_test = lin_reg.predict(x_test)
-    return train_criteron, evaluate(y_pred_test, y_test)
+    sum_criterion = 0
+    sum_test_rmse = 0
+
+    for i in range(max_iteration):
+        x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
+        lin_reg.fit(x_train, y_train)
+        y_pred_train = evaluate(lin_reg.predict(x_train), y_train).rmse
+        y_pred_validation = evaluate(lin_reg.predict(x_validation), y_validation).rmse
+        train_criterion = weighted_cost(y_pred_train, y_pred_validation)
+
+        lin_reg.fit(x_tv, y_tv)
+        y_pred_test = lin_reg.predict(x_test)
+
+        sum_criterion = sum_criterion + train_criterion
+        sum_test_rmse = sum_test_rmse + evaluate(y_pred_test, y_test).rmse
+
+    return sum_criterion / max_iteration, sum_test_rmse / max_iteration
 
 
 def weighted_cost(y_pred_train, y_pred_validation, weight=5):
-    train_criteron = weight*abs(y_pred_train - y_pred_validation) + (y_pred_train + y_pred_validation)
-    return train_criteron
+    train_criterion = weight * abs(y_pred_train - y_pred_validation) + (y_pred_train + y_pred_validation)
+    return train_criterion
 
 
 def dataset_split(x, y):
+    """
+    split the data
+    :param x:
+    :param y:
+    :return:
+    """
     x_tv, x_test, y_tv, y_test = train_test_split(x, y, test_size=0.2, random_state=1)
     x_train, x_validation, y_train, y_validation = train_test_split(x_tv, y_tv, test_size=0.2, random_state=1)
     return x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation
@@ -104,19 +81,23 @@ def decision_tree_regression(x, y, max_depth):
     :param max_depth:
     :return:
     """
-    # x_train, x_test, y_train, y_test = train_test_split(x, y, random_state=1)
-    x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
-
     decision_tree_reg = DecisionTreeRegressor(max_depth=max_depth)
+    sum_criterion = 0
+    sum_test_rmse = 0
 
-    decision_tree_reg.fit(x_train, y_train)
-    y_pred_train = evaluate(decision_tree_reg.predict(x_train), y_train).rmse
-    y_pred_validation = evaluate(decision_tree_reg.predict(x_validation), y_validation).rmse
-    train_criteron = weighted_cost(y_pred_train, y_pred_validation)
+    for i in range(max_iteration):
+        x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
+        decision_tree_reg.fit(x_train, y_train)
+        y_pred_train = evaluate(decision_tree_reg.predict(x_train), y_train).rmse
+        y_pred_validation = evaluate(decision_tree_reg.predict(x_validation), y_validation).rmse
+        train_criterion = weighted_cost(y_pred_train, y_pred_validation)
 
-    decision_tree_reg.fit(x_tv, y_tv)
-    y_pred_test = decision_tree_reg.predict(x_test)
-    return train_criteron, evaluate(y_pred_test, y_test)
+        decision_tree_reg.fit(x_tv, y_tv)
+        y_pred_test = decision_tree_reg.predict(x_test)
+        sum_criterion = sum_criterion + train_criterion
+        sum_test_rmse = sum_test_rmse + evaluate(y_pred_test, y_test).rmse
+
+    return sum_criterion / max_iteration, sum_test_rmse / max_iteration
 
 
 def support_vector_regression(x, y):
@@ -126,25 +107,23 @@ def support_vector_regression(x, y):
     :param y:
     :return:
     """
-    # x_train, x_test, y_train, y_test = train_test_split(x, y, random_state=1)
-    x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
-
     linear_svr = SVR(kernel='rbf', epsilon=10)
-    # linear_svr.fit(x_train, y_train.ravel())
-    #
-    # y_pred_train = linear_svr.predict(x_train)
-    # y_pred_test = linear_svr.predict(x_test)
-    #
-    # return evaluate(y_pred_train, y_train), evaluate(y_pred_test, y_test)
+    sum_criterion = 0
+    sum_test_rmse = 0
 
-    linear_svr.fit(x_train, y_train)
-    y_pred_train = evaluate(linear_svr.predict(x_train), y_train).rmse
-    y_pred_validation = evaluate(linear_svr.predict(x_validation), y_validation).rmse
-    train_criteron = weighted_cost(y_pred_train, y_pred_validation)
+    for i in range(max_iteration):
+        x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
+        linear_svr.fit(x_train, y_train)
+        y_pred_train = evaluate(linear_svr.predict(x_train), y_train).rmse
+        y_pred_validation = evaluate(linear_svr.predict(x_validation), y_validation).rmse
+        train_criterion = weighted_cost(y_pred_train, y_pred_validation)
 
-    linear_svr.fit(x_tv, y_tv)
-    y_pred_test = linear_svr.predict(x_test)
-    return train_criteron, evaluate(y_pred_test, y_test)
+        linear_svr.fit(x_tv, y_tv)
+        y_pred_test = linear_svr.predict(x_test)
+        sum_criterion = sum_criterion + train_criterion
+        sum_test_rmse = sum_test_rmse + evaluate(y_pred_test, y_test).rmse
+
+    return sum_criterion / max_iteration, sum_test_rmse / max_iteration
 
 
 def gradient_boosting_regression(x, y):
@@ -154,7 +133,6 @@ def gradient_boosting_regression(x, y):
     :param y:
     :return:
     """
-    # x_train, x_test, y_train, y_test = train_test_split(x, y, random_state=1)
     x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
 
     gbdt = GradientBoostingRegressor(
@@ -173,20 +151,22 @@ def gradient_boosting_regression(x, y):
         , max_leaf_nodes=None
         , warm_start=False
     )
-    # gbdt.fit(x_train, y_train)
-    #
-    # y_pred_train = gbdt.predict(x_train)
-    # y_pred_test = gbdt.predict(x_test)
-    #
-    # return evaluate(y_pred_train, y_train), evaluate(y_pred_test, y_test)
-    gbdt.fit(x_train, y_train)
-    y_pred_train = evaluate(gbdt.predict(x_train), y_train).rmse
-    y_pred_validation = evaluate(gbdt.predict(x_validation), y_validation).rmse
-    train_criteron = weighted_cost(y_pred_train, y_pred_validation)
+    sum_criterion = 0
+    sum_test_rmse = 0
 
-    gbdt.fit(x_tv, y_tv)
-    y_pred_test = gbdt.predict(x_test)
-    return train_criteron, evaluate(y_pred_test, y_test)
+    for i in range(max_iteration):
+        x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
+        gbdt.fit(x_train, y_train)
+        y_pred_train = evaluate(gbdt.predict(x_train), y_train).rmse
+        y_pred_validation = evaluate(gbdt.predict(x_validation), y_validation).rmse
+        train_criterion = weighted_cost(y_pred_train, y_pred_validation)
+
+        gbdt.fit(x_tv, y_tv)
+        y_pred_test = gbdt.predict(x_test)
+        sum_criterion = sum_criterion + train_criterion
+        sum_test_rmse = sum_test_rmse + evaluate(y_pred_test, y_test).rmse
+
+    return sum_criterion / max_iteration, sum_test_rmse / max_iteration
 
 
 def random_forest_regression(x, y, max_depth):
@@ -197,24 +177,24 @@ def random_forest_regression(x, y, max_depth):
     :param max_depth:
     :return:
     """
-    # x_train, x_test, y_train, y_test = train_test_split(x, y, random_state=1)
-
-    x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
     rf = RandomForestRegressor(max_depth=max_depth)
-    # rf.fit(x_train, y_train)
-    #
-    # y_pred_train = rf.predict(x_train)
-    # y_pred_test = rf.predict(x_test)
-    #
-    # return evaluate(y_pred_train, y_train), evaluate(y_pred_test, y_test)
-    rf.fit(x_train, y_train)
-    y_pred_train = evaluate(rf.predict(x_train), y_train).rmse
-    y_pred_validation = evaluate(rf.predict(x_validation), y_validation).rmse
-    train_criteron = weighted_cost(y_pred_train, y_pred_validation)
 
-    rf.fit(x_tv, y_tv)
-    y_pred_test = rf.predict(x_test)
-    return train_criteron, evaluate(y_pred_test, y_test)
+    sum_criterion = 0
+    sum_test_rmse = 0
+
+    for i in range(max_iteration):
+        x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
+        rf.fit(x_train, y_train)
+        y_pred_train = evaluate(rf.predict(x_train), y_train).rmse
+        y_pred_validation = evaluate(rf.predict(x_validation), y_validation).rmse
+        train_criterion = weighted_cost(y_pred_train, y_pred_validation)
+
+        rf.fit(x_tv, y_tv)
+        y_pred_test = rf.predict(x_test)
+        sum_criterion = sum_criterion + train_criterion
+        sum_test_rmse = sum_test_rmse + evaluate(y_pred_test, y_test).rmse
+
+    return sum_criterion / max_iteration, sum_test_rmse / max_iteration
 
 
 def ridge_regression(x, y):
@@ -224,24 +204,24 @@ def ridge_regression(x, y):
     :param y:
     :return:
     """
-    # x_train, x_test, y_train, y_test = train_test_split(x, y, random_state=1)
-    x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
-
     ridge_model = Ridge(alpha=1.0, fit_intercept=True, solver='auto', copy_X=True)
-    # ridge_model.fit(x_train, y_train)
-    #
-    # y_pred_train = ridge_model.predict(x_train)
-    # y_pred_test = ridge_model.predict(x_test)
-    #
-    # return evaluate(y_pred_train, y_train), evaluate(y_pred_test, y_test)
-    ridge_model.fit(x_train, y_train)
-    y_pred_train = evaluate(ridge_model.predict(x_train), y_train).rmse
-    y_pred_validation = evaluate(ridge_model.predict(x_validation), y_validation).rmse
-    train_criteron = weighted_cost(y_pred_train, y_pred_validation)
 
-    ridge_model.fit(x_tv, y_tv)
-    y_pred_test = ridge_model.predict(x_test)
-    return train_criteron, evaluate(y_pred_test, y_test)
+    sum_criterion = 0
+    sum_test_rmse = 0
+
+    for i in range(max_iteration):
+        x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
+        ridge_model.fit(x_train, y_train)
+        y_pred_train = evaluate(ridge_model.predict(x_train), y_train).rmse
+        y_pred_validation = evaluate(ridge_model.predict(x_validation), y_validation).rmse
+        train_criterion = weighted_cost(y_pred_train, y_pred_validation)
+
+        ridge_model.fit(x_tv, y_tv)
+        y_pred_test = ridge_model.predict(x_test)
+        sum_criterion = sum_criterion + train_criterion
+        sum_test_rmse = sum_test_rmse + evaluate(y_pred_test, y_test).rmse
+
+    return sum_criterion / max_iteration, sum_test_rmse / max_iteration
 
 
 def cnn_regression(x, y):
@@ -251,35 +231,70 @@ def cnn_regression(x, y):
     :param y:
     :return:
     """
-    # x_train, x_test, y_train, y_test = train_test_split(x, y, random_state=1)
-    x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
-    columns = x.shape[1]
-    # (-1,5,1)
-    x_train = x_train.reshape((int(len(x_train)), columns, 1))
-    x_test = x_test.reshape((int(len(x_test)), columns, 1))
-    print('Training ------------')
-    # Another way to train the model
-    # cnn_model.fit(x_train, y_train, epochs=10, batch_size=64)
-    #
-    # print('\nTesting ------------')
-    #
-    # # Evaluate the model with the metrics we defined earlier
-    # loss, accuracy = cnn_model.evaluate(x_test, y_test)
-    # print('\ntest loss: ', loss)
-    # print('\ntest accuracy: ', accuracy)
-    #
-    # y_pred_train = cnn_model.predict(x_train)
-    # y_pred_test = cnn_model.predict(x_test)
-    #
-    # return evaluate(y_pred_train, y_train), evaluate(y_pred_test, y_test)
-    cnn_model.fit(x_train, y_train, epochs=10, batch_size=64)
-    y_pred_train = evaluate(cnn_model.predict(x_train), y_train).rmse
-    y_pred_validation = evaluate(cnn_model.predict(x_validation), y_validation).rmse
-    train_criteron = weighted_cost(y_pred_train, y_pred_validation)
+    cnn_model = Sequential()
 
-    cnn_model.fit(x_tv, y_tv, epochs=10, batch_size=64)
-    y_pred_test = cnn_model.predict(x_test)
-    return train_criteron, evaluate(y_pred_test, y_test)
+    cnn_model.add(Conv1D(
+        filters=32,
+        kernel_size=2,
+        strides=1,
+        padding='same',
+        data_format='channels_first'
+    ))
+    cnn_model.add(Activation('relu'))
+
+    cnn_model.add(MaxPooling1D(
+        pool_size=2,
+        strides=2,
+        padding='same',
+        data_format='channels_first'
+    ))
+    cnn_model.add(Dropout(0.2))
+    cnn_model.add(Conv1D(
+        64, 2, strides=1, padding='same', data_format='channels_first'
+    ))
+    cnn_model.add(Activation('relu'))
+
+    cnn_model.add(MaxPooling1D(2, 2, 'same', data_format='channels_first'))
+    cnn_model.add(Dropout(0.2))
+    cnn_model.add(Flatten())
+    cnn_model.add(Dense(128))
+    cnn_model.add(Activation('relu'))
+
+    # Fully connected layer 2 to shape (1) for linear result
+    cnn_model.add(Dense(1, kernel_initializer='normal'))
+    cnn_model.add(Activation('linear'))
+
+    # Another way to define your optimizer
+    adam = Adam(lr=1e-4)
+
+    # We add metrics to get more results you want to see
+    cnn_model.compile(optimizer=adam,
+                      loss=losses.mean_absolute_error,
+                      metrics=['accuracy'])
+
+    sum_criterion = 0
+    sum_test_rmse = 0
+
+    for i in range(max_iteration):
+        x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
+        columns = x.shape[1]
+        x_train = x_train.reshape((int(len(x_train)), columns, 1))
+        x_test = x_test.reshape((int(len(x_test)), columns, 1))
+        x_tv = x_tv.reshape((int(len(x_tv)), columns, 1))
+        x_validation = x_validation.reshape((int(len(x_validation)), columns, 1))
+
+        cnn_model.fit(x_train, y_train, epochs=10, batch_size=64, verbose=0)
+        y_pred_train = evaluate(cnn_model.predict(x_train), y_train).rmse
+        y_pred_validation = evaluate(cnn_model.predict(x_validation), y_validation).rmse
+        train_criterion = weighted_cost(y_pred_train, y_pred_validation)
+
+        cnn_model.fit(x_tv, y_tv, epochs=10, batch_size=64, verbose=0)
+        y_pred_test = cnn_model.predict(x_test)
+
+        sum_criterion = sum_criterion + train_criterion
+        sum_test_rmse = sum_test_rmse + evaluate(y_pred_test, y_test).rmse
+
+    return sum_criterion / max_iteration, sum_test_rmse / max_iteration
 
 
 def rnn_regression(x, y):
@@ -287,15 +302,6 @@ def rnn_regression(x, y):
     applies rnn model to predict the target
     :return:
     """
-    # x_train, x_test, y_train, y_test = train_test_split(x, y, random_state=1)
-    x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
-
-    columns = x.shape[1]
-    x_train = x_train.reshape((int(len(x_train)), columns, 1))
-    x_test = x_test.reshape((int(len(x_test)), columns, 1))
-
-    # y_train = y_train.reshape((int(len(y_train)), 1, 1))
-    # y_test = y_test.reshape((int(len(y_test)), 1, 1))
     rnn_model = Sequential()
 
     # build a LSTM RNN
@@ -305,21 +311,28 @@ def rnn_regression(x, y):
     adam = Adam(LR)
     rnn_model.compile(optimizer=adam,
                       loss=losses.mean_squared_error, )
-    print('Training ------------')
-    # rnn_model.fit(x_train, y_train, batch_size=50)
-    #
-    # y_pred_train = rnn_model.predict(x_train)
-    # y_pred_test = rnn_model.predict(x_test)
-    #
-    # return evaluate(y_pred_train, y_train), evaluate(y_pred_test, y_test)
-    rnn_model.fit(x_train, y_train, batch_size=50)
-    y_pred_train = evaluate(rnn_model.predict(x_train), y_train).rmse
-    y_pred_validation = evaluate(rnn_model.predict(x_validation), y_validation).rmse
-    train_criteron = weighted_cost(y_pred_train, y_pred_validation)
 
-    rnn_model.fit(x_tv, y_tv, batch_size=50)
-    y_pred_test = rnn_model.predict(x_test)
-    return train_criteron, evaluate(y_pred_test, y_test)
+    sum_criterion = 0
+    sum_test_rmse = 0
+
+    for i in range(max_iteration):
+        x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
+
+        columns = x.shape[1]
+        x_train = x_train.reshape((int(len(x_train)), columns, 1))
+        x_test = x_test.reshape((int(len(x_test)), columns, 1))
+        rnn_model.fit(x_train, y_train, batch_size=50, verbose=0)
+        y_pred_train = evaluate(rnn_model.predict(x_train), y_train).rmse
+        y_pred_validation = evaluate(rnn_model.predict(x_validation), y_validation).rmse
+        train_criterion = weighted_cost(y_pred_train, y_pred_validation)
+
+        rnn_model.fit(x_tv, y_tv, batch_size=50)
+        y_pred_test = rnn_model.predict(x_test)
+
+        sum_criterion = sum_criterion + train_criterion
+        sum_test_rmse = sum_test_rmse + evaluate(y_pred_test, y_test).rmse
+
+    return sum_criterion / max_iteration, sum_test_rmse / max_iteration
 
 
 def evaluate(y_pred, y_test):
