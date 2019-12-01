@@ -69,7 +69,7 @@ def dataset_split(x, y):
     :return:
     """
     x_tv, x_test, y_tv, y_test = train_test_split(x, y, test_size=0.2, random_state=1)
-    x_train, x_validation, y_train, y_validation = train_test_split(x_tv, y_tv, test_size=0.2, random_state=1)
+    x_train, x_validation, y_train, y_validation = train_test_split(x_tv, y_tv, test_size=0.2)
     return x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation
 
 
