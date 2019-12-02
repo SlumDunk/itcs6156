@@ -38,26 +38,26 @@ def linear_regression(x, y):
     lin_reg = LinearRegression()
 
     sum_criterion = 0
-    sum_test_rmse = 0
+    sum_test_mae = 0
 
     for i in range(max_iteration):
         x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
         lin_reg.fit(x_train, y_train)
-        y_pred_train = evaluate(lin_reg.predict(x_train), y_train).rmse
-        y_pred_validation = evaluate(lin_reg.predict(x_validation), y_validation).rmse
+        y_pred_train = evaluate(lin_reg.predict(x_train), y_train).mae
+        y_pred_validation = evaluate(lin_reg.predict(x_validation), y_validation).mae
         train_criterion = weighted_cost(y_pred_train, y_pred_validation)
 
         lin_reg.fit(x_tv, y_tv)
         y_pred_test = lin_reg.predict(x_test)
 
         sum_criterion = sum_criterion + train_criterion
-        sum_test_rmse = sum_test_rmse + evaluate(y_pred_test, y_test).rmse
+        sum_test_mae = sum_test_mae + evaluate(y_pred_test, y_test).mae
 
-    return sum_criterion / max_iteration, sum_test_rmse / max_iteration
+    return sum_criterion / max_iteration, sum_test_mae / max_iteration
 
 
-def weighted_cost(y_pred_train, y_pred_validation, weight=5):
-    train_criterion = weight * abs(y_pred_train - y_pred_validation) + (y_pred_train + y_pred_validation)
+def weighted_cost(y_pred_train, y_pred_validation, weight=1):
+    train_criterion = weight * abs(y_pred_train - y_pred_validation) + y_pred_validation
     return train_criterion
 
 
@@ -68,7 +68,7 @@ def dataset_split(x, y):
     :param y:
     :return:
     """
-    x_tv, x_test, y_tv, y_test = train_test_split(x, y, test_size=0.2, random_state=1)
+    x_tv, x_test, y_tv, y_test = train_test_split(x, y, test_size=0.2)
     x_train, x_validation, y_train, y_validation = train_test_split(x_tv, y_tv, test_size=0.2)
     return x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation
 
@@ -83,21 +83,21 @@ def decision_tree_regression(x, y, max_depth):
     """
     decision_tree_reg = DecisionTreeRegressor(max_depth=max_depth)
     sum_criterion = 0
-    sum_test_rmse = 0
+    sum_test_mae = 0
 
     for i in range(max_iteration):
         x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
         decision_tree_reg.fit(x_train, y_train)
-        y_pred_train = evaluate(decision_tree_reg.predict(x_train), y_train).rmse
-        y_pred_validation = evaluate(decision_tree_reg.predict(x_validation), y_validation).rmse
+        y_pred_train = evaluate(decision_tree_reg.predict(x_train), y_train).mae
+        y_pred_validation = evaluate(decision_tree_reg.predict(x_validation), y_validation).mae
         train_criterion = weighted_cost(y_pred_train, y_pred_validation)
 
         decision_tree_reg.fit(x_tv, y_tv)
         y_pred_test = decision_tree_reg.predict(x_test)
         sum_criterion = sum_criterion + train_criterion
-        sum_test_rmse = sum_test_rmse + evaluate(y_pred_test, y_test).rmse
+        sum_test_mae = sum_test_mae + evaluate(y_pred_test, y_test).mae
 
-    return sum_criterion / max_iteration, sum_test_rmse / max_iteration
+    return sum_criterion / max_iteration, sum_test_mae / max_iteration
 
 
 def support_vector_regression(x, y):
@@ -109,21 +109,21 @@ def support_vector_regression(x, y):
     """
     linear_svr = SVR(kernel='rbf', epsilon=10)
     sum_criterion = 0
-    sum_test_rmse = 0
+    sum_test_mae = 0
 
     for i in range(max_iteration):
         x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
         linear_svr.fit(x_train, y_train)
-        y_pred_train = evaluate(linear_svr.predict(x_train), y_train).rmse
-        y_pred_validation = evaluate(linear_svr.predict(x_validation), y_validation).rmse
+        y_pred_train = evaluate(linear_svr.predict(x_train), y_train).mae
+        y_pred_validation = evaluate(linear_svr.predict(x_validation), y_validation).mae
         train_criterion = weighted_cost(y_pred_train, y_pred_validation)
 
         linear_svr.fit(x_tv, y_tv)
         y_pred_test = linear_svr.predict(x_test)
         sum_criterion = sum_criterion + train_criterion
-        sum_test_rmse = sum_test_rmse + evaluate(y_pred_test, y_test).rmse
+        sum_test_mae = sum_test_mae + evaluate(y_pred_test, y_test).mae
 
-    return sum_criterion / max_iteration, sum_test_rmse / max_iteration
+    return sum_criterion / max_iteration, sum_test_mae / max_iteration
 
 
 def gradient_boosting_regression(x, y):
@@ -138,7 +138,7 @@ def gradient_boosting_regression(x, y):
     gbdt = GradientBoostingRegressor(
         loss='ls'
         , learning_rate=0.05
-        , n_estimators=150
+        , n_estimators=100
         , subsample=1
         , min_samples_split=2
         , min_samples_leaf=1
@@ -152,21 +152,21 @@ def gradient_boosting_regression(x, y):
         , warm_start=False
     )
     sum_criterion = 0
-    sum_test_rmse = 0
+    sum_test_mae = 0
 
     for i in range(max_iteration):
         x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
         gbdt.fit(x_train, y_train)
-        y_pred_train = evaluate(gbdt.predict(x_train), y_train).rmse
-        y_pred_validation = evaluate(gbdt.predict(x_validation), y_validation).rmse
+        y_pred_train = evaluate(gbdt.predict(x_train), y_train).mae
+        y_pred_validation = evaluate(gbdt.predict(x_validation), y_validation).mae
         train_criterion = weighted_cost(y_pred_train, y_pred_validation)
 
         gbdt.fit(x_tv, y_tv)
         y_pred_test = gbdt.predict(x_test)
         sum_criterion = sum_criterion + train_criterion
-        sum_test_rmse = sum_test_rmse + evaluate(y_pred_test, y_test).rmse
+        sum_test_mae = sum_test_mae + evaluate(y_pred_test, y_test).mae
 
-    return sum_criterion / max_iteration, sum_test_rmse / max_iteration
+    return sum_criterion / max_iteration, sum_test_mae / max_iteration
 
 
 def random_forest_regression(x, y, max_depth):
@@ -180,21 +180,21 @@ def random_forest_regression(x, y, max_depth):
     rf = RandomForestRegressor(max_depth=max_depth)
 
     sum_criterion = 0
-    sum_test_rmse = 0
+    sum_test_mae = 0
 
     for i in range(max_iteration):
         x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
         rf.fit(x_train, y_train)
-        y_pred_train = evaluate(rf.predict(x_train), y_train).rmse
-        y_pred_validation = evaluate(rf.predict(x_validation), y_validation).rmse
+        y_pred_train = evaluate(rf.predict(x_train), y_train).mae
+        y_pred_validation = evaluate(rf.predict(x_validation), y_validation).mae
         train_criterion = weighted_cost(y_pred_train, y_pred_validation)
 
         rf.fit(x_tv, y_tv)
         y_pred_test = rf.predict(x_test)
         sum_criterion = sum_criterion + train_criterion
-        sum_test_rmse = sum_test_rmse + evaluate(y_pred_test, y_test).rmse
+        sum_test_mae = sum_test_mae + evaluate(y_pred_test, y_test).mae
 
-    return sum_criterion / max_iteration, sum_test_rmse / max_iteration
+    return sum_criterion / max_iteration, sum_test_mae / max_iteration
 
 
 def ridge_regression(x, y):
@@ -207,21 +207,21 @@ def ridge_regression(x, y):
     ridge_model = Ridge(alpha=1.0, fit_intercept=True, solver='auto', copy_X=True)
 
     sum_criterion = 0
-    sum_test_rmse = 0
+    sum_test_mae = 0
 
     for i in range(max_iteration):
         x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
         ridge_model.fit(x_train, y_train)
-        y_pred_train = evaluate(ridge_model.predict(x_train), y_train).rmse
-        y_pred_validation = evaluate(ridge_model.predict(x_validation), y_validation).rmse
+        y_pred_train = evaluate(ridge_model.predict(x_train), y_train).mae
+        y_pred_validation = evaluate(ridge_model.predict(x_validation), y_validation).mae
         train_criterion = weighted_cost(y_pred_train, y_pred_validation)
 
         ridge_model.fit(x_tv, y_tv)
         y_pred_test = ridge_model.predict(x_test)
         sum_criterion = sum_criterion + train_criterion
-        sum_test_rmse = sum_test_rmse + evaluate(y_pred_test, y_test).rmse
+        sum_test_mae = sum_test_mae + evaluate(y_pred_test, y_test).mae
 
-    return sum_criterion / max_iteration, sum_test_rmse / max_iteration
+    return sum_criterion / max_iteration, sum_test_mae / max_iteration
 
 
 def cnn_regression(x, y):
@@ -273,7 +273,7 @@ def cnn_regression(x, y):
                       metrics=['accuracy'])
 
     sum_criterion = 0
-    sum_test_rmse = 0
+    sum_test_mae = 0
 
     for i in range(max_iteration):
         x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
@@ -284,17 +284,17 @@ def cnn_regression(x, y):
         x_validation = x_validation.reshape((int(len(x_validation)), columns, 1))
 
         cnn_model.fit(x_train, y_train, epochs=10, batch_size=64, verbose=0)
-        y_pred_train = evaluate(cnn_model.predict(x_train), y_train).rmse
-        y_pred_validation = evaluate(cnn_model.predict(x_validation), y_validation).rmse
+        y_pred_train = evaluate(cnn_model.predict(x_train), y_train).mae
+        y_pred_validation = evaluate(cnn_model.predict(x_validation), y_validation).mae
         train_criterion = weighted_cost(y_pred_train, y_pred_validation)
 
         cnn_model.fit(x_tv, y_tv, epochs=10, batch_size=64, verbose=0)
         y_pred_test = cnn_model.predict(x_test)
 
         sum_criterion = sum_criterion + train_criterion
-        sum_test_rmse = sum_test_rmse + evaluate(y_pred_test, y_test).rmse
+        sum_test_mae = sum_test_mae + evaluate(y_pred_test, y_test).mae
 
-    return sum_criterion / max_iteration, sum_test_rmse / max_iteration
+    return sum_criterion / max_iteration, sum_test_mae / max_iteration
 
 
 def rnn_regression(x, y):
@@ -313,7 +313,7 @@ def rnn_regression(x, y):
                       loss=losses.mean_squared_error, )
 
     sum_criterion = 0
-    sum_test_rmse = 0
+    sum_test_mae = 0
 
     for i in range(max_iteration):
         x_test, x_train, x_tv, x_validation, y_test, y_train, y_tv, y_validation = dataset_split(x, y)
@@ -322,17 +322,17 @@ def rnn_regression(x, y):
         x_train = x_train.reshape((int(len(x_train)), columns, 1))
         x_test = x_test.reshape((int(len(x_test)), columns, 1))
         rnn_model.fit(x_train, y_train, batch_size=50, verbose=0)
-        y_pred_train = evaluate(rnn_model.predict(x_train), y_train).rmse
-        y_pred_validation = evaluate(rnn_model.predict(x_validation), y_validation).rmse
+        y_pred_train = evaluate(rnn_model.predict(x_train), y_train).mae
+        y_pred_validation = evaluate(rnn_model.predict(x_validation), y_validation).mae
         train_criterion = weighted_cost(y_pred_train, y_pred_validation)
 
         rnn_model.fit(x_tv, y_tv, batch_size=50)
         y_pred_test = rnn_model.predict(x_test)
 
         sum_criterion = sum_criterion + train_criterion
-        sum_test_rmse = sum_test_rmse + evaluate(y_pred_test, y_test).rmse
+        sum_test_mae = sum_test_mae + evaluate(y_pred_test, y_test).mae
 
-    return sum_criterion / max_iteration, sum_test_rmse / max_iteration
+    return sum_criterion / max_iteration, sum_test_mae / max_iteration
 
 
 def evaluate(y_pred, y_test):
@@ -346,7 +346,7 @@ def evaluate(y_pred, y_test):
     mde = metrics.median_absolute_error(y_test, y_pred)
     # print("MDE:", mde)
     # calculate MAE
-    mae = metrics.mean_squared_error(y_test, y_pred)
+    mae = metrics.mean_absolute_error(y_test, y_pred)
     # print("MAE:", mae)
     # calculate r2 score
     r_score = metrics.r2_score(y_test, y_pred)

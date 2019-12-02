@@ -28,7 +28,7 @@ class Individual:
 
     def create_gnome(self):
         # create chromosome or string of genes
-        return [random.randint(0, 1) for _ in range(self.X.shape[1])]
+        return [np.random.choice([0, 1], p=[0.1, 0.9]) for _ in range(self.X.shape[1])]
 
     def mate(self, par2):
         # perform mating and produce new offspring
@@ -66,7 +66,7 @@ class Individual:
         return result_train, result_test
 
 
-def GeneticAlgorithm(X, T, max_gen=30, pop_size=10, **params):
+def GeneticAlgorithm(X, T, max_gen=30, pop_size=50, **params):
     time_start = time.time()
     reg_method = params.pop('reg_method', LinearRegression)
     max_depth = params.pop('max_depth', None)

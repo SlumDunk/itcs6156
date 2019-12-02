@@ -10,8 +10,7 @@ import pickle
 
 cluster_methods = ['kmeans', 'gmm', 'hierachical']
 
-regression_methods = ['linear', 'decision_tree', 'gradient_boosting', 'random_forest',
-                      'ridge']  # , 'cnn', 'rnn', 'support_vector']
+regression_methods = ['linear', 'decision_tree', 'random_forest', 'ridge']  # , 'cnn', 'rnn', 'support_vector', 'gradient_boosting']
 
 
 def load_data(city_name):
