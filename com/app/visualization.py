@@ -103,59 +103,76 @@ def clean_non_cluster_result():
         pickle.dump(final_df, f)
 
 
+def visualization_analysis():
+    f = open(settings.DATA_URL + 'output/cluster_final_result.pkl', "rb")
+    cluster_final_result = pickle.load(f)
+    f.close()
+
+    f = open(settings.DATA_URL + '/output/non_cluster_final_result.pkl', "rb")
+    non_cluster_final_result = pickle.load(f)
+    f.close()
+
+    visualization_result_1(non_cluster_final_result)
+
+    # visualization_result_2(cluster_final_result)
+
+    # visualization_result_3(cluster_final_result)
+
+
+def visualization_result_3(cluster_final_result):
+    df_temp_1 = cluster_final_result.loc[
+        (cluster_final_result['sequence'] == 29) & (cluster_final_result['cluster'] == -1)].groupby(['cluster_method',
+                                                                                                     'city',
+                                                                                                     'regression_method']).mean().drop(
+        columns=['cluster', 'sequence'])
+    df_temp_2 = cluster_final_result.loc[
+        (cluster_final_result['sequence'] == 29) & (cluster_final_result['cluster'] > -1)]
+    df_temp_2 = df_temp_2.groupby(['cluster_method',
+                                   'city',
+                                   'regression_method']).mean().drop(columns=['cluster', 'sequence'])
+    df_temp_1['cluster'] = 'all'
+    df_temp_2['cluster'] = 'cluster_average'
+    df_temp = df_temp_1.append(df_temp_2).reset_index()
+    fig, axes = plt.subplots(4, 6, figsize=(6 * 3, 4 * 3))
+    for (cm), ax in zip(df_temp.reset_index().groupby(['cluster_method',
+                                                       'city',
+                                                       'regression_method']), axes.flatten()):
+        cm[1].plot(x='cluster', y='mae', kind='line', ax=ax, title=f'{cm[0][0]}, {cm[0][1]}, {cm[0][2]}')
+        ax.get_legend().remove()
+    plt.show()
+
+
+def visualization_result_2(cluster_final_result):
+    df_temp = cluster_final_result.loc[(cluster_final_result['cluster_method'] == 'kmeans') &
+                                       (cluster_final_result['city'] == 'Hawaii')]
+    fig, axes = plt.subplots(len(pd.unique(df_temp['regression_method'])),
+                             len(pd.unique(df_temp['cluster'])),
+                             figsize=(
+                                 len(pd.unique(df_temp['cluster'])) * 3,
+                                 len(pd.unique(df_temp['regression_method'])) * 3))
+    for (cm), ax in zip(df_temp.groupby(['regression_method', 'cluster']), axes.flatten()):
+        cm[1].plot(x='sequence', y='mae', kind='line', ax=ax, title=f'{cm[0][0]}, {cm[0][1]}')
+        ax.get_legend().remove()
+        ax.get_xaxis().set_visible(False)
+    plt.show()
+
+
+def visualization_result_1(non_cluster_final_result):
+    fig, axes = plt.subplots(4, 3, figsize=(15, 15))
+    for (cm), ax in zip(non_cluster_final_result.groupby(['city', 'regression_method']), axes.flatten()):
+        cm[1].plot(x='sequence', y='mae', kind='line', ax=ax, title=f'{cm[0][0]}, {cm[0][1]}')
+        ax.get_legend().remove()
+        ax.get_xaxis().set_visible(False)
+    plt.show()
+
+
 if __name__ == '__main__':
     cities = ['Denver', 'Boston', 'Hawaii', 'Nashville']
     # clean_cluster_result()
     # clean_non_cluster_result()
+    visualization_analysis()
 
-# %%
-f = open(settings.DATA_URL+'output/cluster_final_result.pkl', "rb")
-cluster_final_result = pickle.load(f)
-f.close()
 
-f = open(settings.DATA_URL+'/output/non_cluster_final_result.pkl', "rb")
-non_cluster_final_result = pickle.load(f)
-f.close()
-
-# %%
-fig, axes = plt.subplots(4, 3, figsize=(15, 15))
-for (cm), ax in zip(non_cluster_final_result.groupby(['city', 'regression_method']), axes.flatten()):
-    cm[1].plot(x='sequence', y='mae', kind='line', ax=ax, title=f'{cm[0][0]}, {cm[0][1]}')
-    ax.get_legend().remove()
-    ax.get_xaxis().set_visible(False)
-plt.show()
-
-# %%
-df_temp = cluster_final_result.loc[(cluster_final_result['cluster_method'] == 'kmeans') &
-                                   (cluster_final_result['city'] == 'Hawaii')]
-fig, axes = plt.subplots(len(pd.unique(df_temp['regression_method'])),
-                         len(pd.unique(df_temp['cluster'])),
-                         figsize=(len(pd.unique(df_temp['cluster']))*3, len(pd.unique(df_temp['regression_method']))*3))
-for (cm), ax in zip(df_temp.groupby(['regression_method', 'cluster']), axes.flatten()):
-    cm[1].plot(x='sequence', y='mae', kind='line', ax=ax, title=f'{cm[0][0]}, {cm[0][1]}')
-    ax.get_legend().remove()
-    ax.get_xaxis().set_visible(False)
-plt.show()
-
-# %%
-df_temp_1 = cluster_final_result.loc[(cluster_final_result['sequence'] == 29) & (cluster_final_result['cluster'] == -1)].groupby(['cluster_method',
-                                                                                                                                  'city',
-                                                                                                                                  'regression_method']).mean().drop(columns=['cluster', 'sequence'])
-df_temp_2 = cluster_final_result.loc[(cluster_final_result['sequence'] == 29) & (cluster_final_result['cluster'] > -1)]
-df_temp_2 = df_temp_2.groupby(['cluster_method',
-                               'city',
-                               'regression_method']).mean().drop(columns=['cluster', 'sequence'])
-df_temp_1['cluster'] = 'all'
-df_temp_2['cluster'] = 'cluster_average'
-df_temp = df_temp_1.append(df_temp_2).reset_index()
-
-fig, axes = plt.subplots(4, 6, figsize=(6*3, 4*3))
-for (cm), ax in zip(df_temp.reset_index().groupby(['cluster_method',
-                                                   'city',
-                                                   'regression_method']), axes.flatten()):
-    cm[1].plot(x='cluster', y='mae', kind='line', ax=ax, title=f'{cm[0][0]}, {cm[0][1]}, {cm[0][2]}')
-    ax.get_legend().remove()
-plt.show()
 
 
 
