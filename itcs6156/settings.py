@@ -27,7 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-DATA_URL="/Users/liuzhongda/PycharmProjects/itcs6156/static/dataset/"
+DATA_URL="D:/projects/itcs6156/static/dataset/"
 
 
 # Application definition
