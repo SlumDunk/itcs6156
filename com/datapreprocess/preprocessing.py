@@ -1,11 +1,13 @@
 # %% import packages
+import os
 import re
 import numpy as np
 import pandas as pd
 import itcs6156.settings as settings
 
 # %% load dataset
-df = pd.read_csv(settings.DATA_URL + 'listings.csv.gz', compression='gzip')
+file_path = os.path.join(settings.DATA_URL, 'listings.csv.gz')
+df = pd.read_csv(file_path, compression='gzip')
 print(df.info(verbose=True))
 
 # %% preprocessing

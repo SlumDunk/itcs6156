@@ -27,8 +27,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-DATA_URL="/Users/liuzhongda/PycharmProjects/itcs6156/static/dataset/"
-
+ROOT_DIR = os.path.dirname((os.path.abspath(os.curdir)))
+DATA_URL = os.path.join(BASE_DIR, "static", "dataset")
 
 # Application definition
 
