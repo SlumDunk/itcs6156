@@ -1,3 +1,4 @@
+import os
 import pickle
 
 from com.app.base import cluster_methods
@@ -14,9 +15,9 @@ def read_result(city_name, is_cluster=True):
     :return:
     """
     if is_cluster:
-        output_file = settings.DATA_URL + city_name + '/output/result.pkl'
+        output_file = os.path.join(settings.DATA_URL, city_name, 'output', 'result.pkl')
     else:
-        output_file = settings.DATA_URL + city_name + '/output/non_cluster_result.pkl'
+        output_file = os.path.join(settings.DATA_URL, city_name, 'output', 'non_cluster_result.pkl')
     with open(output_file, 'rb') as f:
         result = pickle.load(f)
     return result
@@ -58,7 +59,7 @@ def clean_cluster_result():
                     df.insert(0, 'cluster_method', cluster_method_list);
                     final_df = final_df.append(df)
     print(final_df.info())
-    output_file = settings.DATA_URL + '/output/cluster_final_result.pkl'
+    output_file = os.path.join(settings.DATA_URL, 'output', 'cluster_final_result.pkl')
     with open(output_file, 'wb') as f:
         pickle.dump(final_df, f)
 
@@ -98,7 +99,7 @@ def clean_non_cluster_result():
                     final_df = final_df.append(df)
     print(final_df.info())
     print(final_df.head(5))
-    output_file = settings.DATA_URL + '/output/non_cluster_final_result.pkl'
+    output_file = os.path.join(settings.DATA_URL, 'output', 'non_cluster_final_result.pkl')
     with open(output_file, 'wb') as f:
         pickle.dump(final_df, f)
 
@@ -171,17 +172,4 @@ if __name__ == '__main__':
     # clean_cluster_result()
     # clean_non_cluster_result()
     visualization_analysis()
-
-
-
-
-
-
-
-
-
-
-
-
-
 

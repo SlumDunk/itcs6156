@@ -5,7 +5,7 @@ from itcs6156 import settings
 from com.machinelearning.clustermodel.cluster_functions import *
 from com.machinelearning.regressionmodel.functions import *
 from com.machinelearning.regressionmodel.functions_fea_select import *
-
+import os
 import pickle
 
 cluster_methods = ['kmeans', 'gmm', 'hierachical']
@@ -18,10 +18,13 @@ def load_data(city_name):
     read data from pkl file
     :return:
     """
-    X = pd.read_pickle(settings.DATA_URL + city_name + '/output/train_x.pkl')
-    Y = pd.read_pickle(settings.DATA_URL + city_name + '/output/train_y.pkl')
-    return X, Y
+    output_path = os.path.join(settings.DATA_URL, city_name, "output")
+    train_x_path = os.path.join(output_path, 'train_x.pkl')
+    train_y_path = os.path.join(output_path, 'train_y.pkl')
 
+    X = pd.read_pickle(train_x_path)
+    Y = pd.read_pickle(train_y_path)
+    return X, Y
 
 def cluster_data(X, method):
     """
@@ -141,6 +144,6 @@ def save_result(regression_dicts, city_name):
     :param city_name:
     :return:
     """
-    output_file = settings.DATA_URL + city_name + '/output/result.pkl'
+    output_file = os.path.join(settings.DATA_URL, city_name, 'output', 'result.pkl')
     with open(output_file, 'wb') as f:
         pickle.dump(regression_dicts, f)
