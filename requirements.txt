@@ -16,7 +16,7 @@ cryptography==2.6.1
 cycler==0.10.0
 decorator==4.4.0
 defusedxml==0.6.0
-Django==2.1.7
+Django==2.2.13
 django-cors-headers==3.0.2
 docopt==0.6.2
 entrypoints==0.3
